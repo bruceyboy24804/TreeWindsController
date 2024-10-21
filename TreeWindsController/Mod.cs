@@ -5,6 +5,7 @@ using Game.Modding;
 using Game.SceneFlow;
 using Game.Simulation;
 using Game.UI;
+using HarmonyLib;
 using System.IO;
 
 namespace TreeWindsController
@@ -29,19 +30,17 @@ namespace TreeWindsController
 
 
             AssetDatabase.global.LoadSettings(nameof(TreeWindsController), m_Setting, new Setting(this));
+            updateSystem.UpdateAt<WindControlSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<WindControlSystem>(SystemUpdatePhase.Rendering);
+            var harmony = new Harmony("com.treewindscontroller.windpatch");
+            harmony.PatchAll();
 
-            
+            Instance = this;
         }
         public void OnCreateWorld(UpdateSystem updateSystem)
         {
-            
-
-            updateSystem.World.GetOrCreateSystem<TreeWindsControl>();
-            
-            
-
-           
-            
+            // Ensure the WindUpdateSystem is created and running in the game world
+            updateSystem.World.GetOrCreateSystem<WindControlSystem>();
         }
         public void OnDispose()
         {

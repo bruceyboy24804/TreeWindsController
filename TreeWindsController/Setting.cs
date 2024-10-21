@@ -6,188 +6,174 @@ using Game.UI;
 using Game.UI.Widgets;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
-using static Game.Rendering.Debug.RenderPrefabRenderer;
+using UnityEngine;
+using UnityEngine.Rendering.HighDefinition;
+using JetBrains.Annotations;
 
 namespace TreeWindsController
 {
     [FileLocation(nameof(TreeWindsController))]
     [SettingsUITabOrder(WindTab)]
-    [SettingsUIGroupOrder(DisableWinds, WindSlidersGroup)]
-    [SettingsUIShowGroupName(DisableWinds, WindSlidersGroup)]
+    [SettingsUIGroupOrder(DisableWinds, GlobalWindGroup, GrassBaseGroup, GrassGustGroup, GrassFlutterGroup, TreeBaseGroup, TreeGustGroup, TreeFlutterGroup)]
+    [SettingsUIShowGroupName(DisableWinds, GlobalWindGroup, GrassBaseGroup, GrassGustGroup, GrassFlutterGroup, TreeBaseGroup, TreeGustGroup, TreeFlutterGroup)]
     public class Setting : ModSetting
     {
-        private readonly TreeWindsControl _treeWindsControl;
-
+        //Tabs
         public const string WindTab = "Wind";
-        public const string WindSlidersGroup = "WindSlidersGroup";
+
+        //Groups
+        public const string GlobalWindGroup = "Global Wind Settings";
+        public const string GrassBaseGroup = "Grass Base Settings";
+        public const string GrassGustGroup = "Grass Gust Settings";
+        public const string GrassFlutterGroup = "Grass Flutter Settings";
+        public const string TreeBaseGroup = "Tree Base Settings";
+        public const string TreeGustGroup = "Tree Gust Settings";
+        public const string TreeFlutterGroup = "Tree Flutter Settings";
+
         public const string DisableWinds = "DisableWinds";
 
-
-
-
+        public bool _toggleWind;
+        
         public Setting(IMod mod) : base(mod)
         {
-            _treeWindsControl = TreeWindsControl.Instance;
-
-            if (_treeWindsControl == null)
-            {
-                // Handle the case where TreeWindsControl.Instance is not yet available
-                Mod.log.Warn("TreeWindsControl.Instance is not initialized yet.");
-            }
+            WindControlSystem.Instance.Initialize();
         }
 
-        private TreeWindsControl Get_treeWindsControl()
-        {
-            return _treeWindsControl;
-        }
-
-        private void InitializeTreeWindsControl(TreeWindsControl _treeWindsControl)
-        {
-            if (TreeWindsControl.Instance == null)
-            {
-                // Log a warning or handle initialization failure
-                Mod.log.Warn("TreeWindsControl.Instance is not initialized yet.");
-            }
-            else
-            {
-                _treeWindsControl = TreeWindsControl.Instance;
-            }
-        }
         [SettingsUISection(WindTab, DisableWinds)]
-         public bool DisableWind
+        public bool WindEnabled
         {
-            get
+            get => _toggleWind;
+            set
             {
-                if (_treeWindsControl == null)
-                {
-                    Mod.log.Error("Attempted to access TreeWindsControl before initialization.");
-                    return false;
-                }
+                _toggleWind = value;
+                
 
-                return _treeWindsControl.disableAllWind;
-            }
-            set
-            {
-                if (_treeWindsControl == null)
-                {
-                    Mod.log.Error("Attempted to set TreeWindsControl before initialization.");
-                    return;
-                }
-
-                _treeWindsControl.disableAllWind = value;
-                _treeWindsControl.updateWindVolumeComponent(null);  // Assuming you have a wind volume component to pass
-            }
-        }
-        [SettingsUISection(WindTab, WindSlidersGroup)]
-        [SettingsUISlider(min = 0f, max = 100f, step = 1, unit = Unit.kPercentage)]
-        public float WindStrength
-        {
-            get => percentageClamped(_treeWindsControl?.strength);
-            set
-            {
-                if (_treeWindsControl != null)
-                {
-                    _treeWindsControl.strength.value = clampedValuePercent(_treeWindsControl.strength, value);
-                    _treeWindsControl.updateWindVolumeComponent(null);  // Assuming you have a wind volume component to pass
-                }
-            }
-        }
-        [SettingsUISection(WindTab, WindSlidersGroup)]
-        [SettingsUISlider(min = 0f, max = 100f, step = 1, unit = Unit.kPercentage)]
-        public float WindStrengthVariance
-        {
-            get => percentageClamped(_treeWindsControl?.strengthVariance);
-            set
-            {
-                if (_treeWindsControl != null)
-                {
-                    _treeWindsControl.strengthVariance.value = clampedValuePercent(_treeWindsControl.strengthVariance, value);
-                    _treeWindsControl.updateWindVolumeComponent(null);  // Assuming you have a wind volume component to pass
-                }
-            }
-        }
-        [SettingsUISection(WindTab, WindSlidersGroup)]
-        [SettingsUISlider(min = 0f, max = 100f, step = 1, unit = Unit.kPercentage)]
-        public float WindStrengthVariancePeriod
-        {
-            get => percentageClamped(_treeWindsControl?.strengthVariancePeriod);
-            set
-            {
-                if (_treeWindsControl != null)
-                {
-                    _treeWindsControl.strengthVariancePeriod.value = clampedValuePercent(_treeWindsControl.strengthVariancePeriod, value);
-                    _treeWindsControl.updateWindVolumeComponent(null);  // Assuming you have a wind volume component to pass
-                }
+                WindControlSystem.Instance.windEnabled = value;
+                
             }
         }
 
-        [SettingsUISection(WindTab, WindSlidersGroup)]
-        [SettingsUISlider(min = 0f, max = 100f, step = 1, unit = Unit.kPercentage)]
+
+
+        // Global Wind Settings
+        [SettingsUISection(WindTab, GlobalWindGroup)]
+        [SettingsUISlider(min = 0f, max = 3f, step = 0.1f, unit = Unit.kPercentage)]
+        public float WindGlobalStrength
+        {
+            get => WindControlSystem.Instance.globalSettings.globalStrengthScale.value;
+            set
+            {
+                if (!WindControlSystem.Instance.isInitialized)
+                {
+                    WindControlSystem.Instance.Initialize(); // Ensure initialization before applying settings
+                }
+
+                WindControlSystem.Instance.globalSettings.globalStrengthScale.value = value;
+               
+            }
+        }
+
+        [SettingsUISection(WindTab, GlobalWindGroup)]
+        [SettingsUISlider(min = 0f, max = 3f, step = 0.1f, unit = Unit.kPercentage)]
+        public float WindGlobalStrength2
+        {
+            get => WindControlSystem.Instance.globalSettings.globalStrengthScale2.value;
+            set
+            {
+                if (!WindControlSystem.Instance.isInitialized)
+                {
+                    WindControlSystem.Instance.Initialize(); // Ensure initialization before applying settings
+                }
+
+                WindControlSystem.Instance.globalSettings.globalStrengthScale2.value = value;
+                
+            }
+        }
+
+        [SettingsUISection(WindTab, GlobalWindGroup)]
+        [SettingsUISlider(min = 0f, max = 360f, step = 1f, unit = Unit.kAngle)]
         public float WindDirection
         {
-            get => percentageClamped(_treeWindsControl?.direction);
+            get => WindControlSystem.Instance.globalSettings.windDirection.value;
             set
             {
-                if (_treeWindsControl != null)
+                if (!WindControlSystem.Instance.isInitialized)
                 {
-                    _treeWindsControl.direction.value = clampedValuePercent(_treeWindsControl.direction, value);
-                    _treeWindsControl.updateWindVolumeComponent(null);  // Assuming you have a wind volume component to pass
+                    WindControlSystem.Instance.Initialize(); // Ensure initialization before applying settings
                 }
+
+                WindControlSystem.Instance.globalSettings.windDirection.value = value;
+                
             }
         }
-        [SettingsUISection(WindTab, WindSlidersGroup)]
-        [SettingsUISlider(min = 0f, max = 100f, step = 1, unit = Unit.kPercentage)]
+
+        [SettingsUISection(WindTab, GlobalWindGroup)]
+        [SettingsUISlider(min = 0f, max = 90f, step = 1f, unit = Unit.kAngle)]
         public float WindDirectionVariance
         {
-            get => percentageClamped(_treeWindsControl?.directionVariance);
+            get => WindControlSystem.Instance.globalSettings.windDirectionVariance.value;
             set
             {
-                if (_treeWindsControl != null)
+                if (!WindControlSystem.Instance.isInitialized)
                 {
-                    _treeWindsControl.directionVariance.value = clampedValuePercent(_treeWindsControl.directionVariance, value);
-                    _treeWindsControl.updateWindVolumeComponent(null);  // Assuming you have a wind volume component to pass
+                    WindControlSystem.Instance.Initialize(); // Ensure initialization before applying settings
                 }
+
+                WindControlSystem.Instance.globalSettings.windDirectionVariance.value = value;
+               
             }
         }
-        [SettingsUISection(WindTab, WindSlidersGroup)]
-        [SettingsUISlider(min = 0f, max = 100f, step = 1, unit = Unit.kPercentage)]
+
+        // Repeat this pattern for all other sliders (e.g., GrassWindBaseStrength, GrassWindGustStrength, TreeWindBaseStrength, etc.)
+
+
+        // Wind Direction Variance Period
+        [SettingsUISection(WindTab, GlobalWindGroup)]
+        [SettingsUISlider(min = 0f, max = 120f, step = 0.1f, unit = Unit.kPercentage)]
         public float WindDirectionVariancePeriod
         {
-            get => percentageClamped(_treeWindsControl?.directionVariancePeriod);
+            get => WindControlSystem.Instance.globalSettings.windDirectionVariancePeriod.value;
             set
             {
-                if (_treeWindsControl != null)
+                if (!WindControlSystem.Instance.isInitialized)
                 {
-                    _treeWindsControl.directionVariancePeriod.value = clampedValuePercent(_treeWindsControl.directionVariancePeriod, value);
-                    _treeWindsControl.updateWindVolumeComponent(null);  // Assuming you have a wind volume component to pass
+                    WindControlSystem.Instance.Initialize();
                 }
+
+                WindControlSystem.Instance.globalSettings.windDirectionVariancePeriod.value = value;
+                
             }
         }
 
-
-
-
-
-
-
-
-
-
-        public override void SetDefaults()
+        // Wind Interpolation Duration
+        [SettingsUISection(WindTab, GlobalWindGroup)]
+        [SettingsUISlider(min = 0.0001f, max = 5f, step = 0.01f, unit = Unit.kPercentage)]
+        public float WindInterpolationDuration
         {
-            
+            get => WindControlSystem.Instance.globalSettings.interpolationDuration.value;
+            set
+            {
+                if (!WindControlSystem.Instance.isInitialized)
+                {
+                    WindControlSystem.Instance.Initialize();
+                }
+
+                WindControlSystem.Instance.globalSettings.interpolationDuration.value = value;
+               
+            }
         }
 
        
 
-        private float percentageClamped(ClampedFloatParameter cfp)
-        {
-            return 100f * (cfp.value - cfp.min) / (cfp.max - cfp.min);
-        }
 
-        private float clampedValuePercent(ClampedFloatParameter cfp, float percent)
+        public override void SetDefaults()
         {
-            return cfp.min + percent / 100f * (cfp.max - cfp.min);
+            WindControlSystem.Instance.windEnabled = false;
+            WindControlSystem.Instance.grassSettings.baseStrength.value = 0.5f;
+            WindControlSystem.Instance.grassSettings.gustStrength.value = 0.5f;
+            WindControlSystem.Instance.treeSettings.baseStrength.value = 0.5f;
+            WindControlSystem.Instance.treeSettings.gustStrength.value = 0.5f;
+            _toggleWind = false;
         }
     }
 
@@ -198,45 +184,43 @@ namespace TreeWindsController
         {
             m_Setting = setting;
         }
+
         public IEnumerable<KeyValuePair<string, string>> ReadEntries(IList<IDictionaryEntryError> errors, Dictionary<string, int> indexCounts)
         {
             return new Dictionary<string, string>
             {
-                { m_Setting.GetSettingsLocaleID(), "TreeWindsController" },
+                { m_Setting.GetSettingsLocaleID(), "Tree Winds Controller" },
                 { m_Setting.GetOptionTabLocaleID(Setting.WindTab), "Wind" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.DisableWinds), "Toggle Wind" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.GlobalWindGroup), "Global Wind Settings" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.GrassBaseGroup), "Grass Base Settings" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.GrassGustGroup), "Grass Gust Settings" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.TreeBaseGroup), "Tree Base Settings" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.TreeGustGroup), "Tree Gust Settings" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.WindEnabled)), "Toggle Wind" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.WindEnabled)), "Toggles the wind (uncheck to toggle wind off and check to toggle wind on)" },
 
-                { m_Setting.GetOptionGroupLocaleID(Setting.DisableWinds), "DisableWinds" },
-                { m_Setting.GetOptionGroupLocaleID(Setting.WindSlidersGroup), "WindSliders" },
-  
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.DisableWind)), "Disable wind" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.DisableWind)) , "Toggle to disable wind" },
 
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.WindStrength)), "Wind strength" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.WindStrength)), "Set wind strength" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.WindGlobalStrength)), "Global Wind Strength" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.WindGlobalStrength)), "Controls the global wind strength" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.WindGlobalStrength2)), "Global Wind Strength 2" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.WindGlobalStrength2)), "Controls the global wind strength" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.WindDirection)), "Global Wind Direction" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.WindDirection)), "Controls the global wind direction" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.WindDirectionVariance)), "Global Wind Direction variance" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.WindDirectionVariance)), "Controls the global wind direction variance" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.WindDirectionVariancePeriod)), "Global Wind Direction variance period" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.WindDirectionVariancePeriod)), "Controls the global wind direction variance period" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.WindInterpolationDuration)), "Global Wind Interpolation Duration" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.WindInterpolationDuration)), "Controls the global wind interpolation duration" },
 
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.WindStrengthVariance)), "Wind strength variance" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.WindStrengthVariance)), "Set wind strength variance" },
-
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.WindStrengthVariancePeriod)), "Wind strength variance period" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.WindStrengthVariancePeriod)), "Set wind strength variance period" },
-
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.WindDirection)), "Wind direction" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.WindDirection)), "Set wind direction" },
-
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.WindDirectionVariance)), "Wind direction variance" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.WindDirectionVariance)), "Set wind direction variance" },
-
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.WindDirectionVariancePeriod)), "Wind direction variance period" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.WindDirectionVariancePeriod)), "Set wind direction variance period" },
 
                
-
             };
         }
 
         public void Unload()
         {
-
         }
     }
 }

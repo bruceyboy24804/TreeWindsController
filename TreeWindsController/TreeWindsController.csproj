@@ -14,8 +14,19 @@
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.props" />
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.targets" />
 	<ItemGroup>
+	  <Compile Remove="WindUpdateSystem.cs" />
+	</ItemGroup>
+	<ItemGroup>
 		<Reference Include="Unity.RenderPipelines.Core.Runtime">
 			<HintPath>$(UnityPackagesPath)\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
+		</Reference>
+		<Reference Include="Unity.RenderPipelines.HighDefinition.Config.Runtime">
+			<HintPath>$(UnityPackagesPath)\Unity.RenderPipelines.HighDefinition.Config.Runtime.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="Unity.RenderPipelines.HighDefinition.Runtime">
+			<HintPath>$(UnityPackagesPath)\Unity.RenderPipelines.HighDefinition.Runtime.dll</HintPath>
+			<Private>false</Private>
 		</Reference>
 	</ItemGroup>
 	<ItemGroup>
